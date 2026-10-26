@@ -1,0 +1,7 @@
+.vercel/
+.playwright-mcp/
+_src/
+__pycache__/
+.env*
+Thumbs.db
+.DS_Store
