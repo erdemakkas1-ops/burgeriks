@@ -1,6 +1,5 @@
 _src/
 tools/
-layers/layers.json
 .playwright-mcp/
 README.md
 .nojekyll

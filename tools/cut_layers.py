@@ -1,15 +1,14 @@
-"""Cut the Gurme Burgeriks film assets from the two Gemini renders.
+"""Cut the Gurme Burgeriks film layers from the two Gemini renders.
 
     python tools/cut_layers.py _src/gemini/exploded.webp _src/gemini/closed.webp
 
-exploded: the burger's six ingredients floating apart on flat grey, with empty rows between them.
+exploded: the burger's six ingredients floating apart on flat grey, with clear gaps between them.
 closed:   the same burger assembled, same camera and backdrop.
 
-Writes layers/l0.webp (top bun) ... l5.webp (pickles, sauce, bottom bun), each cropped to its own
-box, their soft drop shadows layers/s0..s5.webp, and layers/closed.webp (the assembled burger,
-cropped). Prints the film's data-layers JSON: per layer its box in the exploded render
-[x, y, w, h] and where it sits in the closed burger [x, y] (closed px scaled to the exploded
-render's size), plus the closed burger's box, so the page can play one into the other.
+Writes _src/layers/l0.png (top bun) ... l5.png (pickles, sauce, bottom bun), each cropped to its
+own box, and _src/layers/layers.json: per layer its box in the exploded render [x, y, w, h] and
+where it sits in the closed burger [x, y] (closed px scaled to the exploded render's size), plus
+the closed burger's box. tools/make_film.py renders the film's frames from them.
 """
 import json
 import sys
@@ -17,13 +16,12 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "layers"
+OUT = ROOT / "_src" / "layers"  # inputs for tools/make_film.py, not served
 
 NAMES = ["Üst ekmek", "Pastırma & jambon", "Karamelize soğan", "Cheddar & köfte", "Kibrit patates", "Turşu, sos & alt ekmek"]
-SHADOW_PAD = 40  # px around each layer's shadow sprite; the page's SHADOW_PAD must match
 
 
 def clean(mask, close=9, min_area=400, holes=True):
@@ -144,7 +142,7 @@ def main(exploded_path, closed_path):
         yy, xx = np.nonzero(m)
         box = (int(xx.min()), int(yy.min()), int(xx.max()) + 1, int(yy.max()) + 1)
         piece = cut[box[1]:box[3], box[0]:box[2]]
-        Image.fromarray(piece, "RGBA").save(OUT / f"l{i}.webp", quality=90, method=6)
+        Image.fromarray(piece, "RGBA").save(OUT / f"l{i}.png")
 
         # where it sits in the closed burger. Bun, meat, onions and patty look the same assembled:
         # find them by colour, on the burger's centre line, below the layer above. The fries
@@ -162,18 +160,8 @@ def main(exploded_path, closed_path):
         else:
             py = cbox[3] - h
 
-        # pre-blurred shadow (canvas shadowBlur is far too slow per frame): box + SHADOW_PAD all
-        # round, at half size, drawn scaled up under the layer
-        pad = Image.new("L", (piece.shape[1] + 2 * SHADOW_PAD, piece.shape[0] + 2 * SHADOW_PAD), 0)
-        pad.paste(Image.fromarray(piece[..., 3]), (SHADOW_PAD, SHADOW_PAD))
-        pad = pad.resize((pad.width // 2, pad.height // 2), Image.LANCZOS).filter(ImageFilter.GaussianBlur(8))
-        shadow = Image.new("RGBA", pad.size, (70, 14, 4, 0))
-        shadow.putalpha(pad.point(lambda v: int(v * .62)))
-        shadow.save(OUT / f"s{i}.webp", quality=70, method=6)
         layers.append({"name": NAMES[i], "box": [box[0], box[1], box[2] - box[0], box[3] - box[1]], "closed": [int(px), int(py)]})
 
-    closed = rgba(cl, cl_mask)[cbox[1]:cbox[3], cbox[0]:cbox[2]]
-    Image.fromarray(closed, "RGBA").save(OUT / "closed.webp", quality=90, method=6)
     data = {"layers": [[*l["box"], *l["closed"]] for l in layers],
             "closed": [cbox[0], cbox[1], cbox[2] - cbox[0], cbox[3] - cbox[1]],
             "scale": round(k, 4)}

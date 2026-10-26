@@ -2,9 +2,8 @@
 
 Static one-page demo for Burgeriks (Ufuktepe / Keçiören, Ankara), built on the same reference
 as the Oha Burger demo: the hero is a film that plays as you scroll. The Gurme Burgeriks lifts
-apart into labelled layers, stacks back, drops into the Burgeriks Menü photo, and the lights go
-out on the neon sign. Below it: the lineup ("Tezgâh"), the full menu, story, reviews and location.
-No build step: `index.html` + `img/` + `layers/` is the whole site.
+apart into labelled layers and settles back. Below it: the lineup ("Tezgâh"), the full menu,
+story, reviews and location. No build step: `index.html` + `img/` + `frames/` is the whole site.
 
 Live: https://erdemakkas1-ops.github.io/burgeriks/ (GitHub Pages, `gh-pages` branch). A copy also
 runs on Vercel at https://burgeriks.vercel.app, but some Turkish connections reset `*.vercel.app`,
@@ -12,43 +11,39 @@ so canonical and share URLs point at GitHub Pages.
 
 ## The film
 
-- Unlike Oha's frame sequence, nothing is pre-rendered. Two Gemini renders of the Gurme Burgeriks
-  (made from the restaurant's photo, same camera and grey backdrop) drive it: the assembled
-  burger (`layers/closed.webp`) and an exploded view cut into six ingredient layers
-  (`layers/l0–l5.webp`: bun, ham & pastırma, onions, cheddar & patty, shoestring fries, pickles &
-  sauced bottom bun). `layers/s0–s5.webp` are their baked drop shadows. ~240 KB in all.
-- On scroll each layer moves from where it sits in the closed burger to where it floats in the
-  exploded render; the closed render hands over to the layers early in that move, so the burger
-  starts and ends as the real assembled shot. `data-layers` on the film holds both positions.
-- The backdrop is a CSS radial gradient (`--flame…` tokens); the burger, the poster and the
-  menu photo are cut-outs, so they sit on it without the grey studio.
-- In `index.html`, `data-map` on the film maps scroll progress → film time (0–9); scene
-  `data-from`/`data-to` are film time. `layout()` in the script decides where the burger sits
-  and when it separates (1.2–2.7), shows labels (2.6–4.7), drops into the menu cut-out (5.0–6.5)
-  and when the lights go out (7.0+).
-- `vercel.json` caches `layers/` as immutable: after re-cutting, bump the film's `data-v` and the
-  `?v=` on the layer preload.
-- `prefers-reduced-motion` (and no JS) shows a still hero with the photo instead of the pinned film.
+- Same engine as the Oha Burger site: `frames/d/` (1280×720) and `frames/m/` (768×432, phones) are a
+  frame sequence drawn to a canvas and scrubbed by page scroll, streamed in coarse-to-fine. On
+  portrait screens the 16:9 frame is a band at the top, zoomed in on the burger.
+- No video clip: `tools/make_film.py` renders the frames from two Gemini renders of the Gurme
+  Burgeriks (assembled, and exploded on flat grey), cut into six ingredient layers by
+  `tools/cut_layers.py`. The burger stands assembled, the ingredients lift off one after another
+  from the top, hang apart for the labels, and settle back from the bottom up.
+- In `index.html`, the film's `data-map` maps scroll progress → film seconds; scene
+  `data-from`/`data-to` and the labels' `data-keys` are film seconds. `make_film.py` prints
+  `data-frames` and each label's `data-x`/`data-y` (percent of the frame); paste them in after a
+  re-render.
+- `vercel.json` caches `frames/` as immutable: after re-rendering, bump the film's `data-v` and the
+  `?v=` on the two frame preloads and the poster.
+- `prefers-reduced-motion` (and no JS) shows the first frame as a still hero.
 
-Rebuilding (Python with Pillow, NumPy and OpenCV; the source photos in `_src/` are not in the repo):
+Rebuilding (Python with Pillow, NumPy and OpenCV; the sources in `_src/` are not in the repo):
 
 ```bash
-python tools/cut_layers.py _src/gemini/exploded.webp _src/gemini/closed.webp   # prints data-layers
+python tools/cut_layers.py _src/gemini/exploded.webp _src/gemini/closed.webp
+python tools/make_film.py
 python tools/make_images.py
 ```
 
 The exploded render must keep a clear gap between ingredients (each layer is one connected piece).
 Bun, meat, onions and patty are found in the closed render by colour; the fries and the bottom
-bun are placed by rule (they look different pressed together). Check a re-cut by stacking the
-layers at their closed positions next to `closed.webp`.
+bun are placed by rule (they look different pressed together).
 
 ## Content sources
 
 - Menu, prices and product photos: Burgeriks' Trendyol Go page (October 2026). Hours and the two
   quoted reviews: Yemeksepeti. Address, phone and Maps link: the Instagram bio (@burgeriks).
 - Film burger: Gemini renders made from the restaurant's Gurme Burgeriks photo (`_src/gemini/`).
-- Logo icons: upscaled from the 150 px Instagram profile picture; the neon sign and wordmark are
-  redrawn in SVG/CSS after it.
+- Logo icons: upscaled from the 150 px Instagram profile picture; the wordmark is redrawn in CSS after it.
 - The story photo is from the restaurant's Instagram (640 px; ask them for the original).
 
 ## Before going live
