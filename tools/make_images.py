@@ -3,7 +3,8 @@
     python tools/make_images.py
 
 Sources live in _src/ (not deployed): _src/tgo/p/*.jpg|png are the 1280 px product photos,
-_src/ig/p0.jpg the Instagram profile picture, _src/ig/p4.jpg the tray photo.
+_src/ig/p0.jpg the Instagram profile picture, _src/ig/p4.jpg the tray photo, and
+_src/gemini/closed.webp the assembled burger render (for the poster).
 """
 from pathlib import Path
 
@@ -11,7 +12,8 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 
-from cut_layers import burger_mask, clean, fill_from
+from cut_layers import clean, fill_from
+from cut_layers import food_mask as burger_mask, rgba as burger_rgba
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "_src"
@@ -78,9 +80,12 @@ def main() -> None:
         im = im.crop((0, 110, 1280, 1070))  # 4:3
         save(im, out + ".webp", 960)
 
-    # Film poster for reduced motion / no JS: the Gurme Burgeriks cut out, on the film's backdrop
-    gurme = product("gurme")
-    save(cutout(gurme, np.asarray(burger_mask(gurme)) > 127), "film-poster.webp", 1100, 82)
+    # Film poster for reduced motion / no JS: the assembled Gurme Burgeriks render, cut out
+    closed = np.asarray(Image.open(SRC / "gemini" / "closed.webp").convert("RGB"))
+    m = burger_mask(closed)
+    ys, xs = np.nonzero(m)
+    poster = Image.fromarray(burger_rgba(closed, m)).crop((xs.min() - 8, ys.min() - 8, xs.max() + 9, ys.max() + 9))
+    save(poster, "film-poster.webp", 1100, 86)
 
     # Film, scene 3: the Burgeriks Menü photo cut out, drawn under the stacked burger
     menu = product("menuburg")

@@ -56,7 +56,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="layers/l1.webp?v=4">
+<link rel="preload" as="image" href="layers/closed.webp?v=5">
 <script>
   document.documentElement.classList.add('js');
 </script>
@@ -261,8 +261,8 @@
   .film--static { height: auto; }
   .film--static .film__stage { position: relative; top: 0; height: calc(100svh - var(--header-h)); min-height: 600px; }
   .film--static .film__poster {
-    display: block; position: absolute; right: 4%; top: 50%; translate: 0 -50%;
-    width: min(56%, 92vh); height: auto; aspect-ratio: 1;
+    display: block; position: absolute; right: 8%; top: 50%; translate: 0 -50%;
+    width: min(46%, 76vh); height: auto;
   }
   .film--static .film__scene:not(.film__scene--hero), .film--static .film__labels,
   .film--static .film__hint, .film--static .film__canvas, .film--static .neon { display: none; }
@@ -430,7 +430,7 @@
     .film__tag { left: calc(100% + 6px); }
     .film__stage { --spot: 50% 26%; }
     .neon { left: 50%; top: 23%; width: min(400px, 66vw); }
-    .film--static .film__poster { right: auto; left: 50%; top: 4%; translate: -50% 0; width: min(84%, 50vh); }
+    .film--static .film__poster { right: auto; left: 50%; top: 6%; translate: -50% 0; width: min(78%, 44vh); }
   }
 
   /* ---------- Mobile ---------- */
@@ -511,14 +511,14 @@
 </header>
 
 <main id="ana">
-  <!-- FILM — layers/ made by tools/cut_layers.py; data-boxes are each layer's [x, y, w, h] in the
-       1280 px photo. data-map: scroll progress → film time. Scene data-from/data-to are film time. -->
-  <section class="film film--static" id="film" data-v="4"
-    data-boxes="[[212,160,848,299],[137,385,1022,274],[235,512,814,201],[235,661,831,158],[177,767,929,191],[256,852,795,276]]"
+  <!-- FILM — layers/ made by tools/cut_layers.py from the two Gemini renders; data-layers is its
+       output. data-map: scroll progress → film time. Scene data-from/data-to are film time. -->
+  <section class="film film--static" id="film" data-v="5"
+    data-layers='{"layers":[[181,54,456,181,150,183],[137,245,556,167,106,294],[198,391,423,109,167,384],[186,508,454,111,155,473],[156,626,511,123,133,552],[184,758,458,190,161,564]],"closed":[80,186,603,568]}'
     data-map="0:0,.05:.4,.17:1.9,.31:2.8,.43:4.3,.52:5.1,.63:6.4,.72:7.1,.84:8.4,1:9"
     aria-labelledby="hero-title">
     <div class="film__stage">
-      <img class="film__poster" src="img/film-poster.webp" width="1100" height="1100" alt="Gurme Burgeriks: susamlı ekmek, pastırma, dana jambon, karamelize soğan, cheddar, dana köfte, kibrit patates ve turşu" fetchpriority="high">
+      <img class="film__poster" src="img/film-poster.webp" width="677" height="637" alt="Gurme Burgeriks: susamlı ekmek, pastırma, dana jambon, karamelize soğan, cheddar, dana köfte, kibrit patates ve turşu" fetchpriority="high">
       <canvas class="film__canvas" aria-hidden="true"></canvas>
 
       <div class="film__scene film__scene--hero" data-from="0" data-to="1.1">
@@ -892,18 +892,23 @@
     const labels = film.querySelector('.film__labels');
     const labelEls = [...labels.children];
     const neon = film.querySelector('.neon');
-    const boxes = JSON.parse(film.dataset.boxes);
+    // Each layer: its box in the exploded render [x, y, w, h] and its top-left in the closed
+    // burger [x, y]; closed: the assembled burger's box. All in render px (tools/cut_layers.py).
+    const data = JSON.parse(film.dataset.layers);
+    const boxes = data.layers;
+    const [qx, qy, qw, qh] = data.closed;
     const map = film.dataset.map.split(',').map(pair => pair.split(':').map(Number));
     const v = film.dataset.v;
 
-    // The burger in the source photo, and the burger inside the menu photo it drops into (px of 1280)
-    const SRC = { cx: 647, cy: 644, h: 970 };
-    const DROP = { cx: 741, cy: 692, h: 645 };
-    const GAP = 84;                               // separation between layers when exploded, source px
-    const ROT = [-2.2, 1.6, -1.1, .8, -1.4, .4];  // degrees at full separation
-    const DRIFT = [-10, 16, -8, 6, 12, 0];        // source px sideways at full separation
-    const MID = (boxes.length - 1) / 2;           // layers part around the middle of the stack
-    const SPREAD = SRC.h + (boxes.length - 1) * GAP;
+    // Both stacks are drawn around their own centre, so one plays into the other in place
+    const CC = { x: qx + qw / 2, y: qy + qh / 2 };
+    const top = Math.min(...boxes.map(b => b[1])), bottom = Math.max(...boxes.map(b => b[1] + b[3]));
+    const left = Math.min(...boxes.map(b => b[0])), right = Math.max(...boxes.map(b => b[0] + b[2]));
+    const CE = { x: (left + right) / 2, y: (top + bottom) / 2 };
+    const EH = bottom - top, EW = right - left;  // exploded stack size
+    const HALF = EW / 2;                         // the label column starts past this
+    const DROP = { cx: 741, cy: 692, h: 645 };   // the burger inside the menu photo (px of 1280)
+    const ROT = [-1.4, 1, -.7, .6, -.9, .3];     // degrees at full separation
 
     const clamp = x => Math.min(1, Math.max(0, x));
     const ease = x => x * x * (3 - 2 * x);
@@ -916,8 +921,8 @@
       return points[points.length - 1][1];
     };
 
-    const SHADOW_PAD = 40;                   // source px around each baked shadow (tools/cut_layers.py)
-    let pending = boxes.length * 2;
+    const SHADOW_PAD = 40;                   // render px around each baked shadow (tools/cut_layers.py)
+    let pending = boxes.length * 2 + 1;
     const load = src => {
       const img = new Image();
       img.decoding = 'async';
@@ -927,6 +932,7 @@
     };
     const layers = boxes.map((_, i) => load(`layers/l${i}.webp?v=${v}`));
     const shadows = boxes.map((_, i) => load(`layers/s${i}.webp?v=${v}`));
+    const closed = load(`layers/closed.webp?v=${v}`);
     const menu = new Image();  // loaded after the layers, it only appears mid-film
     menu.decoding = 'async';
     menu.onload = () => draw(true);
@@ -942,23 +948,23 @@
       let s, cx, cy;
       if (portrait) {
         const tablet = cw > 600;  // upright tablets have room for a bigger burger above the copy
-        s = Math.min(cw * .82 / 1030, ch * (tablet ? .44 : .34) / SRC.h);
-        cx = cw * .5; cy = ch * .25;
-        s = lerp(s, ch * (tablet ? .58 : .5) / SPREAD, e);
-        cy = lerp(cy, ch * (tablet ? .33 : .28), e);
-        cx = lerp(cx, cw * .36, l); s *= lerp(1, .82, l);
+        s = Math.min(cw * .84 / qw, ch * (tablet ? .42 : .34) / qh);
+        cx = cw * .5; cy = ch * .27;
+        s = lerp(s, Math.min(cw * .84 / EW, ch * (tablet ? .66 : .52) / EH), e);
+        cy = lerp(cy, ch * (tablet ? .37 : .3), e);
+        cx = lerp(cx, cw * .36, l); s *= lerp(1, .8, l);
       } else {
-        s = ch * .68 / SRC.h;
+        s = ch * .7 / qh;
         cx = cw * .66; cy = ch * .52;
-        s = lerp(s, Math.min(s, ch * .88 / SPREAD), e);
+        s = lerp(s, Math.min(s, ch * .86 / EH), e);
         // labels: slide the burger left and keep the label column (≈240 px wide) on screen
         cx = lerp(cx, cw * .54, l);
-        s = lerp(s, Math.min(s, (cw - 260 - cx) / 600), l);
+        s = lerp(s, Math.min(s, (cw - 260 - cx) / (HALF + 50)), l);
       }
       const P = portrait ? cw * 1.22 : Math.min(ch * 1.1, cw * .72);  // menu photo size
       const k = P / 1280;
       const pc = portrait ? [cw * .5, ch * .3] : [cw * .64, ch * .56];
-      s = lerp(s, DROP.h / SRC.h * k, m);
+      s = lerp(s, DROP.h * k / qh, m);
       cx = lerp(cx, pc[0], m); cy = lerp(cy, pc[1], m);
       return { s, cx, cy, e, l, portrait, photo: { x: pc[0] - DROP.cx * k, y: pc[1] - DROP.cy * k, size: P } };
     };
@@ -983,40 +989,52 @@
       const burgerA = 1 - clamp((t - 6.05) / .45);
       if (burgerA > 0) {
         // contact shadow under the bottom bun
-        const floor = L.cy + (1129 - SRC.cy + MID * GAP * L.e) * L.s;
-        const g = ctx.createRadialGradient(L.cx, floor, 0, L.cx, floor, 470 * L.s);
+        const floor = L.cy + lerp(qy + qh - CC.y, bottom - CE.y, L.e) * L.s;
+        const R = qw * .52 * L.s;
+        const g = ctx.createRadialGradient(L.cx, floor, 0, L.cx, floor, R);
         g.addColorStop(0, 'rgba(70,14,4,.42)');
         g.addColorStop(1, 'rgba(70,14,4,0)');
         ctx.globalAlpha = burgerA * (1 - photoA);
         ctx.save();
         ctx.translate(L.cx, floor); ctx.scale(1, .09); ctx.translate(-L.cx, -floor);
         ctx.fillStyle = g;
-        ctx.fillRect(L.cx - 480 * L.s, floor - 480 * L.s, 960 * L.s, 960 * L.s);
+        ctx.fillRect(L.cx - R, floor - R, 2 * R, 2 * R);
         ctx.restore();
 
-        // layers, bottom first, so each one shades the layer under it as they part
+        // the assembled burger, handing over to its layers as soon as they start to part
+        const closedA = 1 - ease(clamp((L.e - .06) / .14));
+        const layerA = ease(clamp(L.e / .08));
+        if (closedA > 0) {
+          ctx.globalAlpha = burgerA * closedA;
+          ctx.drawImage(closed, L.cx + (qx - CC.x) * L.s, L.cy + (qy - CC.y) * L.s, qw * L.s, qh * L.s);
+        }
+
+        // layers, bottom first, so each one shades the layer under it as they part; each moves
+        // from its place in the closed burger to its place in the exploded render
         for (let i = layers.length - 1; i >= 0; i--) {
-          const [bx, by, bw, bh] = boxes[i];
+          const [bx, by, bw, bh, px, py] = boxes[i];
           const w = bw * L.s, h = bh * L.s;
-          const x = L.cx + (bx - SRC.cx + DRIFT[i] * L.e) * L.s;
-          const y = L.cy + (by - SRC.cy + GAP * L.e * (i - MID)) * L.s;
-          ctx.save();
-          ctx.translate(x + w / 2, y + h / 2);
-          ctx.rotate(ROT[i] * L.e * Math.PI / 180);
-          if (L.e > .01 && i < layers.length - 1) {
-            const pad = SHADOW_PAD * L.s;
-            ctx.globalAlpha = burgerA * L.e;
-            ctx.drawImage(shadows[i], -w / 2 - pad, -h / 2 - pad + 24 * L.s * L.e, w + 2 * pad, h + 2 * pad);
+          const x = L.cx + lerp(px - CC.x, bx - CE.x, L.e) * L.s;
+          const y = L.cy + lerp(py - CC.y, by - CE.y, L.e) * L.s;
+          if (layerA > 0) {
+            ctx.save();
+            ctx.translate(x + w / 2, y + h / 2);
+            ctx.rotate(ROT[i] * L.e * Math.PI / 180);
+            if (L.e > .01 && i < layers.length - 1) {
+              const pad = SHADOW_PAD * L.s;
+              ctx.globalAlpha = burgerA * layerA * L.e;
+              ctx.drawImage(shadows[i], -w / 2 - pad, -h / 2 - pad + 14 * L.s * L.e, w + 2 * pad, h + 2 * pad);
+            }
+            ctx.globalAlpha = burgerA * layerA;
+            ctx.drawImage(layers[i], -w / 2, -h / 2, w, h);
+            ctx.restore();
           }
-          ctx.globalAlpha = burgerA;
-          ctx.drawImage(layers[i], -w / 2, -h / 2, w, h);
-          ctx.restore();
 
           // ingredient label: dot on the food, leader to a column right of the burger
           const el = labelEls[i];
           if (L.l > 0) {
             const dotX = x + w * (L.portrait ? .7 : .74), dotY = y + h * .55;
-            const col = L.cx + (L.portrait ? 545 : 600) * L.s;
+            const col = L.cx + (HALF + (L.portrait ? 20 : 50)) * L.s;
             el.style.left = `${dotX.toFixed(1)}px`;
             el.style.top = `${dotY.toFixed(1)}px`;
             el.style.width = `${Math.max(12, col - dotX).toFixed(1)}px`;

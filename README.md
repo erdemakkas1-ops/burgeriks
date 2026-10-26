@@ -12,13 +12,14 @@ so canonical and share URLs point at GitHub Pages.
 
 ## The film
 
-- Unlike Oha's frame sequence, nothing is pre-rendered: `layers/l0–l5.webp` are the restaurant's
-  Gurme Burgeriks photo cut into six ingredient layers (bun, ham & pastırma, onions, cheddar &
-  patty, shoestring fries, pickles & sauced bottom bun), drawn live on a canvas and moved by page
-  scroll (~220 KB in total, sharp at any size). `layers/s0–s5.webp` are their baked drop shadows.
-- The cut follows the food, not straight lines: pixels are labelled by colour (all the pink/red
-  meat stays in one layer wherever it hangs), and what an ingredient hid under the one above is
-  filled from its own colours. Preview the labels before trusting a re-cut.
+- Unlike Oha's frame sequence, nothing is pre-rendered. Two Gemini renders of the Gurme Burgeriks
+  (made from the restaurant's photo, same camera and grey backdrop) drive it: the assembled
+  burger (`layers/closed.webp`) and an exploded view cut into six ingredient layers
+  (`layers/l0–l5.webp`: bun, ham & pastırma, onions, cheddar & patty, shoestring fries, pickles &
+  sauced bottom bun). `layers/s0–s5.webp` are their baked drop shadows. ~240 KB in all.
+- On scroll each layer moves from where it sits in the closed burger to where it floats in the
+  exploded render; the closed render hands over to the layers early in that move, so the burger
+  starts and ends as the real assembled shot. `data-layers` on the film holds both positions.
 - The backdrop is a CSS radial gradient (`--flame…` tokens); the burger, the poster and the
   menu photo are cut-outs, so they sit on it without the grey studio.
 - In `index.html`, `data-map` on the film maps scroll progress → film time (0–9); scene
@@ -32,16 +33,20 @@ so canonical and share URLs point at GitHub Pages.
 Rebuilding (Python with Pillow, NumPy and OpenCV; the source photos in `_src/` are not in the repo):
 
 ```bash
-python tools/cut_layers.py _src/tgo/p/gurme.jpg   # prints the boxes for data-boxes
+python tools/cut_layers.py _src/gemini/exploded.webp _src/gemini/closed.webp   # prints data-layers
 python tools/make_images.py
 ```
 
-The cut lines between layers are hand-placed in `CUTS` in `tools/cut_layers.py`.
+The exploded render must keep a clear gap between ingredients (each layer is one connected piece).
+Bun, meat, onions and patty are found in the closed render by colour; the fries and the bottom
+bun are placed by rule (they look different pressed together). Check a re-cut by stacking the
+layers at their closed positions next to `closed.webp`.
 
 ## Content sources
 
 - Menu, prices and product photos: Burgeriks' Trendyol Go page (October 2026). Hours and the two
   quoted reviews: Yemeksepeti. Address, phone and Maps link: the Instagram bio (@burgeriks).
+- Film burger: Gemini renders made from the restaurant's Gurme Burgeriks photo (`_src/gemini/`).
 - Logo icons: upscaled from the 150 px Instagram profile picture; the neon sign and wordmark are
   redrawn in SVG/CSS after it.
 - The story photo is from the restaurant's Instagram (640 px; ask them for the original).
