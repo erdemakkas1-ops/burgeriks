@@ -15,7 +15,7 @@ so canonical and share URLs point at GitHub Pages.
 - Unlike Oha's frame sequence, nothing is pre-rendered: `layers/l0–l5.webp` are the restaurant's
   Gurme Burgeriks photo cut into six ingredient layers (bun, ham & pastırma, onions, cheddar &
   patty, shoestring fries, pickles & sauced bottom bun), drawn live on a canvas and moved by page
-  scroll (~250 KB in total, sharp at any size). `layers/s0–s5.webp` are their baked drop shadows.
+  scroll (~220 KB in total, sharp at any size). `layers/s0–s5.webp` are their baked drop shadows.
 - The cut follows the food, not straight lines: pixels are labelled by colour (all the pink/red
   meat stays in one layer wherever it hangs), and what an ingredient hid under the one above is
   filled from its own colours. Preview the labels before trusting a re-cut.
@@ -29,7 +29,7 @@ so canonical and share URLs point at GitHub Pages.
   `?v=` on the layer preload.
 - `prefers-reduced-motion` (and no JS) shows a still hero with the photo instead of the pinned film.
 
-Rebuilding (Python with Pillow; the source photos in `_src/` are not in the repo):
+Rebuilding (Python with Pillow, NumPy and OpenCV; the source photos in `_src/` are not in the repo):
 
 ```bash
 python tools/cut_layers.py _src/tgo/p/gurme.jpg   # prints the boxes for data-boxes
