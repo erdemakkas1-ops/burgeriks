@@ -2,7 +2,8 @@
 
 Static one-page demo for Burgeriks (Ufuktepe / Keçiören, Ankara), built on the same reference
 as the Oha Burger demo: the hero is a film that plays as you scroll. The Gurme Burgeriks lifts
-apart into labelled layers and settles back. Below it: the lineup ("Tezgâh"), the full menu,
+apart into labelled layers, settles back, and the camera pulls back to it in a box between a
+cola and fries; the lid closes on the Burgeriks logo. Below it: the lineup ("Tezgâh"), the full menu,
 story, reviews and location. No build step: `index.html` + `img/` + `frames/` is the whole site.
 
 Live: https://erdemakkas1-ops.github.io/burgeriks/ (GitHub Pages, `gh-pages` branch). A copy also
@@ -17,7 +18,10 @@ so canonical and share URLs point at GitHub Pages.
 - No video clip: `tools/make_film.py` renders the frames from two Gemini renders of the Gurme
   Burgeriks (assembled, and exploded on flat grey), cut into six ingredient layers by
   `tools/cut_layers.py`. The burger stands assembled, the ingredients lift off one after another
-  from the top, hang apart for the labels, and settle back from the bottom up.
+  from the top, hang apart for the labels, and settle back from the bottom up. Then two more
+  Gemini renders, the open and the closed box (same camera), take over: the camera pulls back
+  from the bun to the box while the burger dissolves into it, and the closed render is wiped in
+  over the lid only (where the two renders differ), top to bottom.
 - In `index.html`, the film's `data-map` maps scroll progress → film seconds; scene
   `data-from`/`data-to` and the labels' `data-keys` are film seconds. `make_film.py` prints
   `data-frames` and each label's `data-x`/`data-y` (percent of the frame); paste them in after a

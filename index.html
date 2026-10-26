@@ -56,8 +56,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="frames/d/0000.webp?v=6" media="(min-width: 761px)">
-<link rel="preload" as="image" href="frames/m/0000.webp?v=6" media="(max-width: 760px)">
+<link rel="preload" as="image" href="frames/d/0000.webp?v=8" media="(min-width: 761px)">
+<link rel="preload" as="image" href="frames/m/0000.webp?v=8" media="(max-width: 760px)">
 <script>
   document.documentElement.classList.add('js');
 </script>
@@ -158,7 +158,7 @@
      Same engine as the Oha Burger site: a frame sequence (frames/, made by tools/make_film.py)
      drawn to a canvas. The burger stands assembled, its ingredients lift apart one by one, get
      labelled, and settle back. */
-  .film { position: relative; height: 640vh; background: var(--brick-deep); } /* last 100vh: the lineup slides over the pinned frame */
+  .film { position: relative; height: 900vh; background: var(--brick-deep); } /* last 100vh: the lineup slides over the pinned frame */
   .film__stage {
     position: sticky; top: var(--header-h);
     height: calc(100svh - var(--header-h));
@@ -185,6 +185,7 @@
   }
   .js .film:not(.film--static) .film__scene { opacity: 0; visibility: hidden; }
   .film__scene--narrow { width: min(400px, 30vw); }
+  .film__scene--box { width: min(360px, 25vw); } /* left of the cola cup in the box shot */
 
   .film__kicker { display: inline-flex; align-items: center; gap: 12px; font: 500 .75rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mustard); }
   .film__kicker::before { content: ""; width: 34px; height: 2px; background: currentColor; }
@@ -408,7 +409,7 @@
     @media (min-width: 601px) { /* upright tablets: the frame band is taller, the copy shorter */
       .film__stage::after { background: linear-gradient(0deg, rgba(116,27,14,.96) 0%, rgba(116,27,14,.8) 26%, rgba(116,27,14,0) 36%); }
     }
-    .film__scene, .film__scene--narrow {
+    .film__scene, .film__scene--narrow, .film__scene--box {
       top: auto; bottom: clamp(36px, 5vh, 64px); translate: none;
       width: min(620px, calc(100% - 2 * var(--gutter)));
     }
@@ -444,8 +445,8 @@
     .nav a:not(.btn) { font: 900 2.4rem/1 var(--display); text-transform: uppercase; padding: 14px 0; border-bottom: 1px solid var(--line); }
     .nav .btn { margin-top: 18px; }
 
-    .film { height: 560vh; }
-    .film__scene, .film__scene--narrow { bottom: 96px; } /* clear the action bar */
+    .film { height: 780vh; }
+    .film__scene, .film__scene--narrow, .film__scene--box { bottom: 96px; } /* clear the action bar */
     .film__h1 { font-size: clamp(3rem, 15vw, 4.6rem); }
     .film__title { font-size: clamp(3rem, 15vw, 4.4rem); }
     .film__scene--hero .film__lede { display: none; }
@@ -502,10 +503,10 @@
        data-map: scroll progress → film seconds. Scene data-from/data-to and label data-keys are
        film seconds. Frames are cached as immutable (vercel.json): after re-rendering them, bump
        data-v and the ?v= on the preloads and the poster. -->
-  <section class="film film--static" id="film" data-frames="112" data-fps="15" data-v="6"
-    data-map="0:0,.06:.6,.26:3.2,.5:4.8,.7:6.6,.86:7.2,1:7.4" aria-labelledby="hero-title">
+  <section class="film film--static" id="film" data-frames="175" data-fps="15" data-v="8"
+    data-map="0:0,.04:.6,.17:3.2,.32:4.8,.43:6.6,.47:7,.6:9.2,.67:10,.8:11,1:11.6" aria-labelledby="hero-title">
     <div class="film__stage">
-      <img class="film__poster" src="frames/d/0000.webp?v=6" width="1280" height="720" alt="Gurme Burgeriks: susamlı ekmek, pastırma, dana jambon, karamelize soğan, cheddar, dana köfte, kibrit patates ve turşu" fetchpriority="high">
+      <img class="film__poster" src="frames/d/0000.webp?v=8" width="1280" height="720" alt="Gurme Burgeriks: susamlı ekmek, pastırma, dana jambon, karamelize soğan, cheddar, dana köfte, kibrit patates ve turşu" fetchpriority="high">
       <canvas class="film__canvas" aria-hidden="true"></canvas>
 
       <div class="film__scene film__scene--hero" data-from="0" data-to="1.0">
@@ -544,7 +545,15 @@
         <p class="film__label" data-x="62.4,62.4" data-y="84.2,83.4"><span class="film__tag"><b class="is-long">Turşu &amp; sos</b><b class="is-short">Sos</b><small>Peri peri, alt ekmek</small></span></p>
       </div>
 
-      <div class="film__scene" data-from="6.5" data-to="99">
+      <div class="film__scene film__scene--box" data-from="8.8" data-to="10.3" aria-hidden="true">
+        <p class="film__kicker">Paket hazır</p>
+        <p class="film__title">Hamburger<br><em>menü.</em></p>
+        <dl class="film__prices">
+          <div><dt>Burger · patates · içecek</dt><dd>650<small> ₺</small></dd></div>
+        </dl>
+      </div>
+
+      <div class="film__scene film__scene--box" data-from="10.9" data-to="99">
         <p class="film__kicker">00:00'a kadar açık</p>
         <p class="film__title">Lezzetin ateşle<br><em>buluştuğu yer.</em></p>
         <p class="film__lede">Ara, söyle, gel al. Ya da kapına gelsin.</p>
@@ -868,10 +877,13 @@
     const set = innerWidth > 760 ? 'd' : 'm';
     const frames = new Array(count);
     const FOCUS = .58;        // the burger's centre line in the frame (tools/make_film.py CX)
+    const PULL = [7, 9.2];    // film seconds of the camera pulling back to the box (make_film.py)
+    const BOX_FOCUS = .67;    // the middle of cola, box and fries in the box shot
     const EDGE = '#741b0e';   // the backdrop's darkest stop, around the band on portrait screens
     let current = 0, target = 0, animating = false, shownFrame = -1, shownSize = '';
 
     const clamp = v => Math.min(1, Math.max(0, v));
+    const ease = v => v * v * (3 - 2 * v);
     const interp = (points, x) => {
       for (let k = 1; k < points.length; k++) {
         const [x0, y0] = points[k - 1], [x1, y1] = points[k];
@@ -910,26 +922,31 @@
     };
 
     // Where the 16:9 frame sits, in CSS px. Landscape: cover. Portrait: a band near the top,
-    // zoomed in on the burger (more on phones, where the frame is narrowest).
-    const frameRect = (cw, ch) => {
+    // zoomed in on the burger (more on phones, where the frame is narrowest). As the camera pulls
+    // back, the band follows it to the box scene's centre and eases out just enough that the
+    // cola and fries fit (they span about 54% of the frame's width).
+    const frameRect = (cw, ch, t) => {
       if (cw >= ch) {
         const w = Math.max(cw, ch * 16 / 9);
-        return { x: (cw - w) / 2, y: (ch - w * 9 / 16) / 2, w };
+        return { x: (cw - w) / 2, y: (ch - w * 9 / 16) / 2, w, zoom: 0 };
       }
-      const zoom = cw > 600 ? 1.35 : 1.8;
+      const max = cw > 600 ? 1.35 : 1.8;
+      const k = ease(clamp((t - PULL[0]) / (PULL[1] - PULL[0])));
+      const zoom = max - (max - Math.min(max, 1.7)) * k;
       const w = cw * zoom;
-      return { x: cw / 2 - FOCUS * w, y: 0, w };
+      const focus = FOCUS + (BOX_FOCUS - FOCUS) * k;
+      return { x: Math.min(0, Math.max(cw - w, cw / 2 - focus * w)), y: 0, w, zoom };
     };
 
     function draw(force) {
       const i = Math.min(count - 1, Math.round(current * fps));
       const cw = canvas.clientWidth, ch = canvas.clientHeight;
-      const size = `${cw}x${ch}`;
+      const r = frameRect(cw, ch, current);
+      const size = `${cw}x${ch}x${r.zoom.toFixed(3)}`;
       if (!force && i === shownFrame && size === shownSize) return;
       const img = nearest(i);
       if (!img) return;
       shownFrame = i; shownSize = size;
-      const r = frameRect(cw, ch);
       const dpr = canvas.width / cw;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const h = r.w * 9 / 16;
