@@ -7,7 +7,11 @@ _src/ig/p0.jpg the Instagram profile picture, _src/ig/p4.jpg the tray photo.
 """
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+import cv2
+import numpy as np
+from PIL import Image, ImageDraw
+
+from cut_layers import burger_mask, clean, fill_from
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "_src"
@@ -26,26 +30,39 @@ def save(im: Image.Image, name: str, size: int, quality: int = 80) -> None:
     print(name, im.size)
 
 
-def feathered(im: Image.Image, edges=(0.16, 0.10, 0.16, 0.06)) -> Image.Image:
-    """Fade the photo's edges (left, top, right, bottom fractions) to transparent so it
-    sits on the film's backdrop without a visible rectangle."""
-    w, h = im.size
-    a = Image.new("L", (w, h), 255)
-    d = ImageDraw.Draw(a)
-    l, t, r, b = (int(f * s) for f, s in zip(edges, (w, h, w, h)))
-    for i in range(l):
-        d.line([(i, 0), (i, h)], fill=int(255 * (i / l) ** 1.6))
-    for i in range(r):
-        d.line([(w - 1 - i, 0), (w - 1 - i, h)], fill=int(255 * (i / r) ** 1.6))
-    vert = Image.new("L", (w, h), 255)
-    dv = ImageDraw.Draw(vert)
-    for i in range(t):
-        dv.line([(0, i), (w, i)], fill=int(255 * (i / t) ** 1.6))
-    for i in range(b):
-        dv.line([(0, h - 1 - i), (w, h - 1 - i)], fill=int(255 * (i / b) ** 1.6))
-    rgba = im.copy()
-    rgba.putalpha(ImageChops.multiply(a, vert))
-    return rgba
+def food_mask(im: Image.Image, grey_boxes=(), min_area=6000) -> np.ndarray:
+    """Everything with colour on the grey studio sweep (several items, unlike the single
+    burger in cut_layers): closed, specks and the grey table shadows dropped, holes filled.
+    grey_boxes (x0, y0, x1, y1) also take colourless parts darker than the sweep, like a
+    can's metal rim."""
+    rgb = np.asarray(im).astype(int)
+    chroma = rgb.max(2) - rgb.min(2)
+    m = (chroma > 30) | (rgb.max(2) < 60)
+    keep_grey = np.zeros(m.shape, bool)
+    for x0, y0, x1, y1 in grey_boxes:
+        keep_grey[y0:y1, x0:x1] = rgb[y0:y1, x0:x1].max(2) < 185
+    m |= keep_grey
+    m = clean(m, close=9, min_area=min_area)
+    m = cv2.morphologyEx(m.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    m = clean(m.astype(bool), close=15, min_area=min_area)
+    # closing bridges into the grey table between items; peel off colourless pixels that
+    # reach the outside (the same pixels inside the food come back as filled holes)
+    neutral = (chroma < .32 * rgb.max(2)) & (rgb.max(2) > 70) & ~keep_grey  # table and its warm shadows
+    return clean(m & ~neutral, close=5, min_area=min_area)
+
+
+def cutout(im: Image.Image, mask: np.ndarray, side_fade=0) -> Image.Image:
+    """The food on transparency, its grey-studio fringe repainted from just inside the edge.
+    side_fade px fade out things the photo's frame cuts through at the left and right."""
+    rgb = np.asarray(im)
+    core = cv2.erode(mask.astype(np.uint8), np.ones((7, 7), np.uint8)).astype(bool)
+    col = fill_from(rgb, core, mask & ~core)
+    a = cv2.GaussianBlur(mask.astype(np.float32), (0, 0), 1.0)
+    if side_fade:
+        x = np.arange(a.shape[1])
+        ramp = np.clip(np.minimum(x, a.shape[1] - 1 - x) / side_fade, 0, 1)
+        a *= (ramp * ramp * (3 - 2 * ramp))[None, :]
+    return Image.fromarray(np.dstack([np.clip(col, 0, 255), a * 255]).astype(np.uint8), "RGBA")
 
 
 def main() -> None:
@@ -61,11 +78,13 @@ def main() -> None:
         im = im.crop((0, 110, 1280, 1070))  # 4:3
         save(im, out + ".webp", 960)
 
-    # Film poster for reduced motion / no JS: the Gurme Burgeriks photo itself
-    save(product("gurme"), "film-poster.webp", 1100, 82)
+    # Film poster for reduced motion / no JS: the Gurme Burgeriks cut out, on the film's backdrop
+    gurme = product("gurme")
+    save(cutout(gurme, np.asarray(burger_mask(gurme)) > 127), "film-poster.webp", 1100, 82)
 
-    # Film, scene 3: the Burgeriks Menü photo with soft edges, drawn under the stacked burger
-    save(feathered(product("menuburg")), "film-menu.webp", 1280, 82)
+    # Film, scene 3: the Burgeriks Menü photo cut out, drawn under the stacked burger
+    menu = product("menuburg")
+    save(cutout(menu, food_mask(menu, grey_boxes=[(1045, 235, 1280, 300)]), side_fade=170), "film-menu.webp", 1280, 82)
 
     # Story section: the tray as served, from Instagram
     tray = Image.open(SRC / "ig" / "p4.jpg").convert("RGB")

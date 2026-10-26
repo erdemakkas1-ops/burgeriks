@@ -56,7 +56,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="layers/l2.webp?v=3">
+<link rel="preload" as="image" href="layers/l1.webp?v=4">
 <script>
   document.documentElement.classList.add('js');
 </script>
@@ -67,9 +67,13 @@
     --smoke: #2c2622;
     --paper: #f1eee9;
     --paper-2: #e4e0d9;
-    --studio-top: #c3c6ca;
-    --studio-mid: #dcdddf;
-    --studio-low: #e7e7e8;
+    --flame-hot: #ffa64f;   /* the film's backdrop: a hot spot behind the burger cooling to brick */
+    --flame: #f5711f;
+    --flame-deep: #d2441a;
+    --brick: #a32a14;
+    --brick-deep: #741b0e;
+    --mustard: #ffd36b;
+    --cream: #fff3e6;
     --ember: #ff6a1a;
     --ember-hot: #ff8a3d;
     --wine: #8a1c2b;
@@ -154,16 +158,17 @@
   .menu-toggle { display: none; }
 
   /* ---------- Film: the burger story, played by scroll ----------
-     Live canvas, no frame sequence: the Gurme Burgeriks photo is cut into five layers
+     Live canvas, no frame sequence: the Gurme Burgeriks photo is cut into six ingredient layers
      (tools/cut_layers.py) that lift apart, get labelled, stack back, drop into the
-     Burgeriks Menü photo, and then the lights go out on the neon sign. */
+     Burgeriks Menü cut-out, and then the lights go out on the neon sign. */
   .film { position: relative; height: 760vh; background: var(--ink); } /* last 100vh: the lineup slides over the pinned stage */
   .film__stage {
     position: sticky; top: var(--header-h);
     height: calc(100svh - var(--header-h));
     overflow: hidden;
-    background: linear-gradient(180deg, var(--studio-top) 0%, var(--studio-mid) 62%, var(--studio-low) 100%);
-    color: var(--ink);
+    --spot: 68% 50%;
+    background: radial-gradient(farthest-corner at var(--spot), var(--flame-hot) 0, var(--flame) 22%, var(--flame-deep) 46%, var(--brick) 74%, var(--brick-deep) 100%);
+    color: var(--cream);
   }
   .film__poster { display: none; }
   .film__canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .5s; }
@@ -180,26 +185,32 @@
   .film__scene--top { top: clamp(24px, 6vh, 64px); translate: none; }
   .film__scene--dark { color: var(--paper); }
 
-  .film__kicker { display: inline-flex; align-items: center; gap: 12px; font: 500 .75rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--wine); }
+  .film__kicker { display: inline-flex; align-items: center; gap: 12px; font: 500 .75rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mustard); }
   .film__kicker::before { content: ""; width: 34px; height: 2px; background: currentColor; }
   .film__scene--dark .film__kicker { color: var(--ember); }
-  .film__h1 { font: 900 clamp(4rem, 9.6vw, 10rem)/1.02 var(--display); text-transform: uppercase; letter-spacing: -.005em; margin: .2em 0 .22em; }
-  .film__h1 em, .film__title em { font-style: normal; color: var(--wine); }
-  .film__title { font: 900 clamp(3.4rem, 6.6vw, 7rem)/.95 var(--display); text-transform: uppercase; margin: .22em 0 .2em; }
+  .film__h1 { font: 900 clamp(4rem, 9.6vw, 10rem)/1.02 var(--display); text-transform: uppercase; letter-spacing: -.005em; margin: .2em 0 .22em; text-shadow: 0 2px 30px rgba(90, 18, 6, .35); }
+  .film__h1 em, .film__title em { font-style: normal; color: var(--mustard); }
+  .film__title { font: 900 clamp(3.4rem, 6.6vw, 7rem)/.95 var(--display); text-transform: uppercase; margin: .22em 0 .2em; text-shadow: 0 2px 30px rgba(90, 18, 6, .35); }
   .film__scene--dark .film__title em { color: var(--ember); }
-  .film__lede { max-width: 36ch; color: #3b3530; font-size: clamp(1rem, 1.2vw, 1.12rem); }
+  .film__lede { max-width: 36ch; color: var(--cream); font-size: clamp(1rem, 1.2vw, 1.12rem); }
   .film__scene--dark .film__lede { color: var(--paper-2); }
   .film__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+  /* on the orange backdrop an ember button would vanish: ink and cream instead */
+  .film__scene:not(.film__scene--dark) .btn { background: var(--ink); border-color: var(--ink); color: var(--cream); }
+  .film__scene:not(.film__scene--dark) .btn:hover { background: var(--smoke); border-color: var(--smoke); color: var(--mustard); }
+  .film__scene:not(.film__scene--dark) .btn--line { background: transparent; border-color: var(--cream); color: var(--cream); }
+  .film__scene:not(.film__scene--dark) .btn--line:hover { background: var(--cream); border-color: var(--cream); color: var(--ink); }
   .film__prices { display: flex; gap: 10px 34px; flex-wrap: wrap; margin: 16px 0 0; }
   .film__prices div { display: grid; gap: 4px; }
-  .film__prices dt { font: 500 .72rem/1.2 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #4a433d; }
-  .film__prices dd { margin: 0; font: 900 2.9rem/1 var(--display); color: var(--ink); }
+  .film__prices dt { font: 500 .72rem/1.2 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--cream); opacity: .85; }
+  .film__prices dd { margin: 0; font: 900 2.9rem/1 var(--display); color: var(--cream); }
   .film__prices dd small { font-size: .55em; }
-  .film .open-status { margin-top: 20px; }
+  .film .open-status { margin-top: 20px; color: var(--cream); }
+  .film .open-status b { color: var(--cream); }
 
   .film__hint {
     position: absolute; z-index: 3; left: 50%; bottom: 22px; translate: -50% 0;
-    font: 500 .7rem/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: #4a433d;
+    font: 500 .7rem/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--cream);
     transition: opacity .3s;
   }
   .film__hint::after { content: ""; display: block; width: 1px; height: 28px; margin: 10px auto 0; background: currentColor; }
@@ -214,17 +225,18 @@
   .film__label { position: absolute; height: 0; margin: 0; opacity: var(--o, 0); }
   .film__label::before {
     content: ""; position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%;
-    background: var(--ember); box-shadow: 0 0 0 4px rgba(255,106,26,.25);
+    background: var(--mustard); box-shadow: 0 0 0 4px rgba(18,16,16,.28);
   }
   .film__label::after {
     content: ""; position: absolute; left: 8px; right: 0; top: 0;
-    border-top: 1px solid rgba(18,16,16,.55);
+    border-top: 1px solid rgba(255,243,230,.75);
     transform-origin: left; transform: scaleX(var(--o, 0));
   }
   .film__tag { position: absolute; left: calc(100% + 12px); top: 0; transform: translateY(-50%); white-space: nowrap; }
   .film__label b { display: block; font: 900 clamp(1.15rem, 1.7vw, 1.7rem)/1 var(--display); text-transform: uppercase; letter-spacing: .01em; }
   .film__label .is-short { display: none; }
-  .film__label small { display: block; margin-top: 5px; font: 500 .66rem/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #4a433d; }
+  .film__label b { text-shadow: 0 1px 14px rgba(90, 18, 6, .45); }
+  .film__label small { display: block; margin-top: 5px; font: 500 .66rem/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--mustard); }
 
   /* The neon sign the finale switches on */
   .neon {
@@ -416,6 +428,7 @@
     .film__label .is-long, .film__label small { display: none; }
     .film__label .is-short { display: block; }
     .film__tag { left: calc(100% + 6px); }
+    .film__stage { --spot: 50% 26%; }
     .neon { left: 50%; top: 23%; width: min(400px, 66vw); }
     .film--static .film__poster { right: auto; left: 50%; top: 4%; translate: -50% 0; width: min(84%, 50vh); }
   }
@@ -500,8 +513,8 @@
 <main id="ana">
   <!-- FILM — layers/ made by tools/cut_layers.py; data-boxes are each layer's [x, y, w, h] in the
        1280 px photo. data-map: scroll progress → film time. Scene data-from/data-to are film time. -->
-  <section class="film film--static" id="film" data-v="3"
-    data-boxes="[[141,159,987,287],[134,386,1027,254],[141,556,975,258],[176,789,931,184],[235,903,795,226]]"
+  <section class="film film--static" id="film" data-v="4"
+    data-boxes="[[212,160,848,299],[137,385,1022,274],[235,512,814,201],[235,661,831,158],[177,767,929,191],[256,852,795,276]]"
     data-map="0:0,.05:.4,.17:1.9,.31:2.8,.43:4.3,.52:5.1,.63:6.4,.72:7.1,.84:8.4,1:9"
     aria-labelledby="hero-title">
     <div class="film__stage">
@@ -537,9 +550,10 @@
       <div class="film__labels" data-from="2.75" data-to="4.3" aria-hidden="true">
         <p class="film__label"><span class="film__tag"><b class="is-long">Susamlı ekmek</b><b class="is-short">Ekmek</b><small>Üst kat</small></span></p>
         <p class="film__label"><span class="film__tag"><b class="is-long">Pastırma &amp; jambon</b><b class="is-short">Pastırma</b><small>BBQ sos damlalı</small></span></p>
-        <p class="film__label"><span class="film__tag"><b class="is-long">120 g dana köfte</b><b class="is-short">Köfte</b><small>Cheddar, karamelize soğan</small></span></p>
-        <p class="film__label"><span class="film__tag"><b class="is-long">Kibrit patates</b><b class="is-short">Patates</b><small>Çıtır kat, turşuyla</small></span></p>
-        <p class="film__label"><span class="film__tag"><b class="is-long">Soslu alt ekmek</b><b class="is-short">Sos</b><small>Peri peri &amp; burger sos</small></span></p>
+        <p class="film__label"><span class="film__tag"><b class="is-long">Karamelize soğan</b><b class="is-short">Soğan</b><small>Ağır ateşte</small></span></p>
+        <p class="film__label"><span class="film__tag"><b class="is-long">120 g dana köfte</b><b class="is-short">Köfte</b><small>Eriyen cheddar</small></span></p>
+        <p class="film__label"><span class="film__tag"><b class="is-long">Kibrit patates</b><b class="is-short">Patates</b><small>Çıtır kat</small></span></p>
+        <p class="film__label"><span class="film__tag"><b class="is-long">Turşu &amp; sos</b><b class="is-short">Sos</b><small>Peri peri, alt ekmek</small></span></p>
       </div>
 
       <div class="film__scene film__scene--top" data-from="5.9" data-to="7.0" aria-hidden="true">
@@ -866,7 +880,7 @@
     });
   });
 
-  // Film: five layers of the Gurme Burgeriks photo drawn live on a canvas and driven by normal
+  // Film: six ingredient layers of the Gurme Burgeriks photo drawn live on a canvas and driven by normal
   // page scroll. Reduced motion (or no JS) keeps the still hero.
   const film = document.getElementById('film');
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -885,9 +899,11 @@
     // The burger in the source photo, and the burger inside the menu photo it drops into (px of 1280)
     const SRC = { cx: 647, cy: 644, h: 970 };
     const DROP = { cx: 741, cy: 692, h: 645 };
-    const GAP = 72;                          // separation between layers when exploded, source px
-    const ROT = [-1.8, 1.4, -.7, 1.1, -.4];  // degrees at full separation
-    const DRIFT = [-8, 14, -6, 10, 0];       // source px sideways at full separation
+    const GAP = 84;                               // separation between layers when exploded, source px
+    const ROT = [-2.2, 1.6, -1.1, .8, -1.4, .4];  // degrees at full separation
+    const DRIFT = [-10, 16, -8, 6, 12, 0];        // source px sideways at full separation
+    const MID = (boxes.length - 1) / 2;           // layers part around the middle of the stack
+    const SPREAD = SRC.h + (boxes.length - 1) * GAP;
 
     const clamp = x => Math.min(1, Math.max(0, x));
     const ease = x => x * x * (3 - 2 * x);
@@ -928,13 +944,13 @@
         const tablet = cw > 600;  // upright tablets have room for a bigger burger above the copy
         s = Math.min(cw * .82 / 1030, ch * (tablet ? .44 : .34) / SRC.h);
         cx = cw * .5; cy = ch * .25;
-        s = lerp(s, ch * (tablet ? .58 : .5) / (SRC.h + 4 * GAP), e);
+        s = lerp(s, ch * (tablet ? .58 : .5) / SPREAD, e);
         cy = lerp(cy, ch * (tablet ? .33 : .28), e);
         cx = lerp(cx, cw * .36, l); s *= lerp(1, .82, l);
       } else {
         s = ch * .68 / SRC.h;
         cx = cw * .66; cy = ch * .52;
-        s = lerp(s, Math.min(s, ch * .86 / (SRC.h + 4 * GAP)), e);
+        s = lerp(s, Math.min(s, ch * .88 / SPREAD), e);
         // labels: slide the burger left and keep the label column (≈240 px wide) on screen
         cx = lerp(cx, cw * .54, l);
         s = lerp(s, Math.min(s, (cw - 260 - cx) / 600), l);
@@ -967,10 +983,10 @@
       const burgerA = 1 - clamp((t - 6.05) / .45);
       if (burgerA > 0) {
         // contact shadow under the bottom bun
-        const floor = L.cy + (1129 - SRC.cy + 2 * GAP * L.e) * L.s;
+        const floor = L.cy + (1129 - SRC.cy + MID * GAP * L.e) * L.s;
         const g = ctx.createRadialGradient(L.cx, floor, 0, L.cx, floor, 470 * L.s);
-        g.addColorStop(0, 'rgba(40,34,30,.34)');
-        g.addColorStop(1, 'rgba(40,34,30,0)');
+        g.addColorStop(0, 'rgba(70,14,4,.42)');
+        g.addColorStop(1, 'rgba(70,14,4,0)');
         ctx.globalAlpha = burgerA * (1 - photoA);
         ctx.save();
         ctx.translate(L.cx, floor); ctx.scale(1, .09); ctx.translate(-L.cx, -floor);
@@ -983,7 +999,7 @@
           const [bx, by, bw, bh] = boxes[i];
           const w = bw * L.s, h = bh * L.s;
           const x = L.cx + (bx - SRC.cx + DRIFT[i] * L.e) * L.s;
-          const y = L.cy + (by - SRC.cy + GAP * L.e * (i - 2)) * L.s;
+          const y = L.cy + (by - SRC.cy + GAP * L.e * (i - MID)) * L.s;
           ctx.save();
           ctx.translate(x + w / 2, y + h / 2);
           ctx.rotate(ROT[i] * L.e * Math.PI / 180);
@@ -1005,7 +1021,7 @@
             el.style.top = `${dotY.toFixed(1)}px`;
             el.style.width = `${Math.max(12, col - dotX).toFixed(1)}px`;
           }
-          const o = Math.min(clamp((L.l - i * .12) / .5), L.l);
+          const o = Math.min(clamp((L.l - i * .08) / .5), L.l);
           el.style.setProperty('--o', Math.max(0, o).toFixed(3));
         }
       }

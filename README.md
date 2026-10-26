@@ -12,12 +12,18 @@ so canonical and share URLs point at GitHub Pages.
 
 ## The film
 
-- Unlike Oha's frame sequence, nothing is pre-rendered: `layers/l0–l4.webp` are the restaurant's
-  Gurme Burgeriks photo cut into five layers, drawn live on a canvas and moved by page scroll
-  (~200 KB in total, sharp at any size). `layers/s0–s4.webp` are their baked drop shadows.
+- Unlike Oha's frame sequence, nothing is pre-rendered: `layers/l0–l5.webp` are the restaurant's
+  Gurme Burgeriks photo cut into six ingredient layers (bun, ham & pastırma, onions, cheddar &
+  patty, shoestring fries, pickles & sauced bottom bun), drawn live on a canvas and moved by page
+  scroll (~250 KB in total, sharp at any size). `layers/s0–s5.webp` are their baked drop shadows.
+- The cut follows the food, not straight lines: pixels are labelled by colour (all the pink/red
+  meat stays in one layer wherever it hangs), and what an ingredient hid under the one above is
+  filled from its own colours. Preview the labels before trusting a re-cut.
+- The backdrop is a CSS radial gradient (`--flame…` tokens); the burger, the poster and the
+  menu photo are cut-outs, so they sit on it without the grey studio.
 - In `index.html`, `data-map` on the film maps scroll progress → film time (0–9); scene
   `data-from`/`data-to` are film time. `layout()` in the script decides where the burger sits
-  and when it separates (1.2–2.7), shows labels (2.6–4.7), drops into the menu photo (5.0–6.5)
+  and when it separates (1.2–2.7), shows labels (2.6–4.7), drops into the menu cut-out (5.0–6.5)
   and when the lights go out (7.0+).
 - `vercel.json` caches `layers/` as immutable: after re-cutting, bump the film's `data-v` and the
   `?v=` on the layer preload.
