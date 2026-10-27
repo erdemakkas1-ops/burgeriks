@@ -18,10 +18,10 @@ so canonical and share URLs point at GitHub Pages.
 - No video clip: `tools/make_film.py` renders the frames from two Gemini renders of the Gurme
   Burgeriks (assembled, and exploded on flat grey), cut into six ingredient layers by
   `tools/cut_layers.py`. The burger stands assembled, the ingredients lift off one after another
-  from the top, hang apart for the labels, and settle back from the bottom up. Then two more
-  Gemini renders, the open and the closed box (same camera), take over: the camera pulls back
-  from the bun to the box while the burger dissolves into it, and the closed render is wiped in
-  over the lid only (where the two renders differ), top to bottom.
+  from the top, hang apart for the labels, and settle back from the bottom up. Then four more
+  Gemini renders of the box (same camera: open, lid half down, nearly shut, closed) take over:
+  the camera pulls back from the bun to the box while the burger dissolves into it, and the lid
+  swings shut pose by pose, changing only where the renders differ.
 - In `index.html`, the film's `data-map` maps scroll progress → film seconds; scene
   `data-from`/`data-to` and the labels' `data-keys` are film seconds. `make_film.py` prints
   `data-frames` and each label's `data-x`/`data-y` (percent of the frame); paste them in after a

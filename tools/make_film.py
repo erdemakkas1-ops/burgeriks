@@ -9,10 +9,10 @@ Same film format as the Oha Burger site, without a video clip.
    It stands assembled, the ingredients lift off one after another from the top, hang apart for
    the labels, then settle back from the bottom up. A slight tilt while they move, a shadow on
    the layer below and a contact shadow on the floor keep it physical.
-2. The box (_src/gemini/box-open.webp and box-closed.webp, same camera): the camera pulls back
-   from the burger's bun to the open box between the cola and the fries, the burger dissolving
-   into the one in the box on the way, as Oha's transition did. Then the lid closes: the closed
-   render is wiped in from the top over the box only.
+2. The box (_src/gemini/box-*.webp, one camera): the camera pulls back from the burger's bun to
+   the open box between the cola and the fries, the burger dissolving into the one in the box on
+   the way, as Oha's transition did. Then the lid swings shut through Gemini's four lid poses
+   (open, half, nearly shut, closed), changing over the box only.
 
 Writes frames/d/0000.webp… (1280x720, desktop) and frames/m/… (768x432, phones) and prints the
 film section's data-frames and the ingredient labels' data-x / data-y (percent of the frame).
@@ -28,8 +28,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 LAYERS = ROOT / "_src" / "layers"
-BOX_OPEN = ROOT / "_src" / "gemini" / "box-open.webp"
-BOX_SHUT = ROOT / "_src" / "gemini" / "box-closed.webp"
+BOX_POSES = [ROOT / "_src" / "gemini" / f"box-{n}.webp" for n in ("open", "mid", "shut", "closed")]
 OUT = ROOT / "frames"
 
 W, H = 1280, 720
@@ -172,11 +171,20 @@ class Burger:
         return np.asarray(frame.convert("RGB"))
 
 
-def padded(path):
+def box_poses():
+    """The four lid renders, each brought to the open render's exposure (Gemini drifts it a
+    little per image) by a per-channel gain measured on the wall and table beside the box."""
+    imgs = [np.asarray(Image.open(p).convert("RGB")).astype(np.float32) for p in BOX_POSES]
+    side = np.ones(imgs[0].shape[:2], bool)
+    side[:, BOX_LID[0] - 40:BOX_LID[2] + 40] = False
+    ref = imgs[0][side].mean(0)
+    return [img * (ref / img[side].mean(0)) for img in imgs]
+
+
+def padded(img):
     """A box render with PAD px of its wall and floor carried on all round, so the frame can show
     more than the render. Sideways, every row continues with the colour of its own edge columns
     (so the horizon runs straight on); up and down, the top and bottom rows carry on."""
-    img = np.asarray(Image.open(path).convert("RGB")).astype(np.float32)
     h, w = img.shape[:2]
     left = cv2.GaussianBlur(np.median(img[:, 8:48], axis=1)[:, None], (0, 0), 3)   # h x 1 x 3
     right = cv2.GaussianBlur(np.median(img[:, -48:-8], axis=1)[:, None], (0, 0), 3)
@@ -197,6 +205,7 @@ def lid_region(open_big, shut_big):
     """Where the two box renders really differ (the lid, the logo, the burger it hides), solid
     inside and feathered a little: elsewhere they match, so no edge shows."""
     d = np.abs(open_big - shut_big).sum(2) > 45
+    d[:, :PAD + BOX_LID[0] - 30] = d[:, PAD + BOX_LID[2] + 30:] = False  # the cup and fries stay put
     d = cv2.morphologyEx(d.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
     d = cv2.dilate(d, np.ones((19, 19), np.uint8))
     d = clean_holes(d)
@@ -209,12 +218,6 @@ def clean_holes(m):
     return m | (1 - flood[1:-1, 1:-1])
 
 
-def lid_mask(region, line):
-    """The lid region above the wipe line (feathered): where the closed render shows."""
-    ys = np.arange(region.shape[0], dtype=np.float32)[:, None] - PAD
-    return (region * np.clip((line - ys) / 40 + .5, 0, 1))[..., None]
-
-
 def camera(k, anchor_img, anchor_frame):
     """Affine that scales the box render by k and puts anchor_img (render px) at anchor_frame."""
     ax, ay = anchor_img[0] + PAD, anchor_img[1] + PAD
@@ -223,8 +226,9 @@ def camera(k, anchor_img, anchor_frame):
 
 def main():
     burger = Burger()
-    open_big, shut_big = padded(BOX_OPEN), padded(BOX_SHUT)
-    region = lid_region(open_big, shut_big)
+    poses = [padded(img) for img in box_poses()]
+    open_big = poses[0]
+    region = np.max([lid_region(open_big, big) for big in poses[1:]], axis=0)[..., None]
     last = burger.frame(T_SHUT)
 
     # the pull-back: from the burger's bun filling the frame as it does now, to the box scene
@@ -237,11 +241,12 @@ def main():
         k = math.exp(math.log(k0) + (math.log(k1) - math.log(k0)) * u)
         at = (a0[0] + (a1[0] - a0[0]) * u, a0[1] + (a1[1] - a0[1]) * u)
         src = open_big
-        if t > T_LID:  # the lid comes down: the closed render wiped in from the top of the lid zone
-            w = ease(clamp((t - T_LID) / (T_SEALED - T_LID)))
-            line = BOX_LID[1] - 40 + (BOX_LID[3] - BOX_LID[1] + 80) * w
-            m = lid_mask(region, line)
-            src = open_big * (1 - m) + shut_big * m
+        if t > T_LID:  # the lid swings shut: pose to pose, each held and changed over quickly
+            s = ease(clamp((t - T_LID) / (T_SEALED - T_LID))) * (len(poses) - 1)
+            i = min(int(s), len(poses) - 2)
+            f = clamp((s - i - .3) / .4)
+            lid = poses[i] * (1 - f) + poses[i + 1] * f
+            src = open_big * (1 - region) + lid * region
         img = cv2.warpAffine(src, camera(k, BOX_BUN[:2], at), (W, H), flags=cv2.INTER_AREA if k < 1 else cv2.INTER_CUBIC)
         d = clamp((t - T_PULL) / DISSOLVE)
         if d < 1:  # the burger shot rides the same camera move while it dissolves into the box
