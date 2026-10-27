@@ -455,6 +455,10 @@
     .film__prices dd { font-size: 2.4rem; }
     .film__hint { display: none; }
     .film--static .film__stage { min-height: 0; }
+    @media (max-height: 760px) { /* short phones: the hero copy has to fit under the burger */
+      .film__h1 { font-size: clamp(2.6rem, 13vw, 4rem); }
+      .film__title { font-size: clamp(2.4rem, 12vw, 3.6rem); }
+    }
 
     .lineup-head { grid-template-columns: minmax(0, 1fr); }
     .lineup { grid-template-columns: minmax(0, 1fr); margin-inline: 0; border-left: 0; }
@@ -868,6 +872,8 @@
     const ctx = canvas.getContext('2d');
     const scenes = [...film.querySelectorAll('.film__scene')];
     const labels = film.querySelector('.film__labels');
+    const hero = film.querySelector('.film__scene--hero');
+    const finale = scenes[scenes.length - 1];
     const count = +film.dataset.frames;
     const fps = +film.dataset.fps;
     // scroll progress → film seconds; extra scroll goes to the labelled stack and the last shot
@@ -924,7 +930,9 @@
     // Where the 16:9 frame sits, in CSS px. Landscape: cover. Portrait: a band near the top,
     // zoomed in on the burger (more on phones, where the frame is narrowest). As the camera pulls
     // back, the band follows it to the box scene's centre and eases out just enough that the
-    // cola and fries fit (they span about 54% of the frame's width).
+    // cola and fries fit (they span about 54% of the frame's width). On short phones the opening
+    // and closing shots ride up (into the empty backdrop above the subject) until it clears the
+    // copy below, and settle back while that copy is faded out.
     const frameRect = (cw, ch, t) => {
       if (cw >= ch) {
         const w = Math.max(cw, ch * 16 / 9);
@@ -935,14 +943,20 @@
       const zoom = max - (max - Math.min(max, 1.7)) * k;
       const w = cw * zoom;
       const focus = FOCUS + (BOX_FOCUS - FOCUS) * k;
-      return { x: Math.min(0, Math.max(cw - w, cw / 2 - focus * w)), y: 0, w, zoom };
+      const h = w * 9 / 16;
+      // the assembled burger spans 26%-84% of the frame's height (make_film.py CLOSED_FLOOR), the
+      // box shot 23%-76%
+      const clear = (el, bottom, room) => Math.min(room * h, Math.max(0, bottom * h + 12 - el.offsetTop));
+      const lift = Math.max(clear(hero, .84, .22) * (1 - ease(clamp((t - .7) / .6))),
+        clear(finale, .76, .2) * ease(clamp((t - 10.5) / .5)));
+      return { x: Math.min(0, Math.max(cw - w, cw / 2 - focus * w)), y: -lift, w, zoom };
     };
 
     function draw(force) {
       const i = Math.min(count - 1, Math.round(current * fps));
       const cw = canvas.clientWidth, ch = canvas.clientHeight;
       const r = frameRect(cw, ch, current);
-      const size = `${cw}x${ch}x${r.zoom.toFixed(3)}`;
+      const size = `${cw}x${ch}x${r.zoom.toFixed(3)}x${r.y.toFixed(1)}`;
       if (!force && i === shownFrame && size === shownSize) return;
       const img = nearest(i);
       if (!img) return;
